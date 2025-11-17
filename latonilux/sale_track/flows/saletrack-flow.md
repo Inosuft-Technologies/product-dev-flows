@@ -15,6 +15,10 @@ This runbook sequences the SaleTrack implementation from schema groundwork throu
    - Create admin seeding script to register core families (grains, proteins, spirits, consumables).
 2. Introduce the `items` collection with purchase metadata (`defaultPurchaseUnitId`, `baseUnitId`, supplier refs, stocking outlets) and portion/serving definitions that map menu offerings to items + units.  
 3. Expose secured CRUD endpoints for families, units, items, and menu portion presets (RBAC: inventory admins only).  
+   - Portion presets sit between items and catalog: they define default/max portions, consumption components, and optional stepped pricing so later UI flows can pick a preset instead of rebuilding the serving logic each time.  
+   - Backend deliverables: `PortionPreset` model, repository, service validations (family → units/items), controller handlers (`GET/POST/PUT/DELETE /inventory/portion-presets`).  
+   - Frontend deliverables: extend the Measurements console with a “Portion Presets” tab that lists, filters, and edits presets; expose a hook for other screens (items, menus) to read presets.
+   - Item maintenance must also ship `menuPricing` CRUD so every `{ itemId, unitId }` combination that a portion references already has a price; later catalog steps treat missing prices as hard failures.
 4. Verification:
    ```bash
    mongo --eval 'db.units.find({}, {name:1, baseFor:1, toBaseFactor:1}).pretty()'
@@ -42,6 +46,7 @@ This runbook sequences the SaleTrack implementation from schema groundwork throu
 3. Update product/menu services to:  
    - Resolve current recipes and default/max portions via a `RecipeResolver`.  
    - Delegate stock adjustments to the inventory service (no direct `quantity` mutation).  
+   - Require each menu/product (including CSV rows) to submit at least one portion definition or `portionPresetId`; fail fast if linked items lack `menuPricing` for the referenced units so pricing always stays in sync.
 4. Adjust repositories, DTOs, and mappers to return recipes + portion metadata alongside products/menus for admin usage.  
 5. Regression checks:
    ```bash
@@ -94,7 +99,8 @@ This runbook sequences the SaleTrack implementation from schema groundwork throu
 1. Update `latonilux-admin` DTOs/models to match new APIs (items, portions, recipes, lots, allocations).  
 2. Build inventory console sections:  
    - Unit & conversion manager.  
-   - Item catalog with lot visibility and portion presets.  
+   - Item catalog with lot visibility and portion presets (select a preset when creating/editing an item so downstream menus inherit consistent portion defaults).  
+   - Portion preset manager (create, clone, edit components, and stepped pricing).  
    - Recipe editor with portion preview, default/max portions, and cost per portion.  
    - Allocation dashboards showing plan vs actual.  
 3. Ensure order, menu, and product views display portion choices, item consumption, and live stock status from the backend.  
@@ -117,6 +123,18 @@ This runbook sequences the SaleTrack implementation from schema groundwork throu
 3. Monitor Mongo `stockLedger` and Redis hit rates; enable alerts on negative stock and transaction failures.  
 4. Conduct user training and gather feedback for backlog grooming.  
 5. After stabilization (≈2 weeks), deprecate legacy stock endpoints and clean up unused fields.
+
+---
+
+## 10. Auto-Priced Menus & Component Pricing
+
+1. Extend item metadata with `menuPricing` array entries `{ unitId, price, label? }` and expose admin CRUD (API + UI) so ops can maintain unit-level pricing for rice portions, chicken pieces, bottles, etc.  
+2. Update menu creation/update services to compute `autoPrice` from portion components (price × quantity × default portions) and persist `{ autoPrice, manualAdjustment, finalPrice }` on menus/recipes. Treat existing menu price field as optional adjustment.  
+3. Adjust DTOs and responses so admin and ordering clients see component price breakdowns alongside the final price. Flag menus whose components lack `menuPricing` so admins can fill gaps.  
+4. Recalculate order totals from the stored recipe snapshot during payment to prevent tampering; fall back to manual price only when component pricing is missing.  
+5. Update admin UI to display auto-calculated price preview, allow optional surcharges, and highlight components with missing price data.  
+6. Add regression tests for auto pricing (multiple components, missing price entries, manual adjustments) and update documentation/spec to reflect the new behavior.  
+7. Once the enforcement is live, refresh the public documentation set (spec, flow, usage examples, Postman collection) so downstream teams understand that menus/products and CSV imports must always include valid portions (or presets) and that missing `menuPricing` combinations fail with a 422 error.
 
 ---
 

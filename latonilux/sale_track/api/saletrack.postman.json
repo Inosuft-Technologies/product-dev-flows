@@ -1,0 +1,991 @@
+{
+  "info": {
+    "name": "SaleTrack End-to-End",
+    "description": "Postman collection covering the SaleTrack inventory, catalog, order, allocation, and reporting APIs after the auto-pricing rollout.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "f64c8602-3f0d-4ef4-bfdf-000000000000"
+  },
+  "item": [
+    {
+      "name": "Inventory Foundations",
+      "item": [
+        {
+          "name": "Create Item Family",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/inventory/families",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "inventory",
+                "families"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Grains\",\n  \"description\": \"Staple grains and cereals\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Unit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/inventory/units",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "inventory",
+                "units"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"familyId\": \"{{familyId}}\",\n  \"name\": \"Portion\",\n  \"type\": \"mass\",\n  \"toBaseFactor\": 0.1389,\n  \"notes\": \"One portion \u2248 0.1389kg\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Unit Conversion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/inventory/conversions",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "inventory",
+                "conversions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"familyId\": \"{{familyId}}\",\n  \"fromUnitId\": \"{{unitBagId}}\",\n  \"toUnitId\": \"{{unitPortionId}}\",\n  \"factor\": 180,\n  \"isBidirectional\": true,\n  \"notes\": \"Bag yields 180 portions\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/inventory/items",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "inventory",
+                "items"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"White Rice\",\n  \"familyId\": \"{{familyId}}\",\n  \"baseUnitId\": \"{{unitKgId}}\",\n  \"defaultPurchaseUnitId\": \"{{unitBagId}}\",\n  \"minReorderQty\": 5,\n  \"defaultOutletIds\": [\"{{branchKitchenId}}\"],\n  \"departmentIds\": [\"{{departmentKitchenId}}\"],\n  \"metadata\": { \"storage\": \"Dry pantry\" }\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Portion Preset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/inventory/portion-presets",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "inventory",
+                "portion-presets"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rice Plate\",\n  \"familyId\": \"{{familyId}}\",\n  \"defaultPortions\": 2,\n  \"maxPortions\": 4,\n  \"components\": [\n    { \"itemId\": \"{{itemRiceId}}\", \"unitId\": \"{{unitPortionId}}\", \"quantity\": 1 }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "List Portion Presets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/v1/inventory/portion-presets",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "inventory",
+                "portion-presets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Configure Item Menu Pricing",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/inventory/items/{{itemRiceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "inventory",
+                "items",
+                "{{itemRiceId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"menuPricing\": [\n    { \"unitId\": \"{{unitPortionId}}\", \"price\": 450, \"label\": \"Rice Portion\", \"currency\": \"NGN\" }\n  ]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inventory Lots",
+      "item": [
+        {
+          "name": "Create Stock Lot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/inventory/lots",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "inventory",
+                "lots"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemId\": \"{{itemRiceId}}\",\n  \"branchId\": \"{{branchKitchenId}}\",\n  \"quantity\": 100,\n  \"unitCost\": 480,\n  \"currency\": \"NGN\",\n  \"receivedAt\": \"2024-11-01T09:00:00Z\",\n  \"supplierName\": \"Grain Supply Co\",\n  \"notes\": \"4 bags at NGN12,000 each\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": false,\n  \"data\": {\n    \"lotId\": \"LOT-001\",\n    \"item\": \"{{itemRiceId}}\",\n    \"branch\": \"{{branchKitchenId}}\",\n    \"quantityRemaining\": 100,\n    \"unitCost\": 480,\n    \"currency\": \"NGN\"\n  },\n  \"message\": \"stock lot created\",\n  \"status\": 201\n}"
+            }
+          ]
+        },
+        {
+          "name": "Adjust Stock Lot",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/inventory/lots/{{lotId}}/adjust",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "inventory",
+                "lots",
+                "{{lotId}}",
+                "adjust"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": -5,\n  \"reason\": \"Stock count variance\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Consume Stock Lot (Manual)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/inventory/lots/consume",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "inventory",
+                "lots",
+                "consume"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemId\": \"{{itemRiceId}}\",\n  \"branchId\": \"{{branchKitchenId}}\",\n  \"quantity\": 10,\n  \"notes\": \"Manual test deduction\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catalog",
+      "item": [
+        {
+          "name": "Create Menu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/menus",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "menus"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rice Plate\",\n  \"price\": 300,\n  \"code\": \"KIT-RICE-PLATE\",\n  \"description\": \"Plate of white rice\",\n  \"branchID\": \"{{branchKitchenCode}}\",\n  \"type\": \"food\",\n  \"unit\": \"plate\",\n  \"serving\": \"kitchen\",\n  \"branches\": [{ \"branchID\": \"{{branchKitchenCode}}\", \"code\": \"KIT\" }],\n  \"portions\": [\n    {\n      \"itemId\": \"{{itemRiceId}}\",\n      \"unitId\": \"{{unitPortionId}}\",\n      \"label\": \"Double Portion\",\n      \"defaultPortions\": 2,\n      \"components\": [\n        { \"itemId\": \"{{itemRiceId}}\", \"unitId\": \"{{unitPortionId}}\", \"quantity\": 2 },\n        { \"itemId\": \"{{itemChickenId}}\", \"unitId\": \"{{unitPieceId}}\", \"quantity\": 2 }\n      ]\n    }\n  ]\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": false,\n  \"data\": {\n    \"menuID\": \"KIT-RICE-PLATE\",\n    \"name\": \"Rice Plate\",\n    \"autoPrice\": 3900,\n    \"manualAdjustment\": 300,\n    \"finalPrice\": 4200,\n    \"portions\": [\n      {\n        \"label\": \"Double Portion\",\n        \"components\": [\n          {\n            \"item\": \"{{itemRiceId}}\",\n            \"unit\": \"{{unitPortionId}}\",\n            \"unitPrice\": 450,\n            \"currency\": \"NGN\"\n          },\n          {\n            \"item\": \"{{itemChickenId}}\",\n            \"unit\": \"{{unitPieceId}}\",\n            \"unitPrice\": 1500,\n            \"currency\": \"NGN\"\n          }\n        ]\n      }\n    ],\n    \"activeRecipe\": { \"version\": 1, \"status\": \"active\" }\n  },\n  \"message\": \"menu created\",\n  \"status\": 201\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Menu (Multi-Branch)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/menus/create-multiple",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "menus",
+                "create-multiple"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tequila Shot\",\n  \"price\": 300,\n  \"description\": \"Premium tequila shot\",\n  \"type\": \"beverage\",\n  \"user\": \"{{userId}}\",\n  \"branches\": [\n    { \"branchID\": \"{{branchBarCode}}\", \"code\": \"BAR\" },\n    { \"branchID\": \"{{branchVipCode}}\", \"code\": \"VIP\" }\n  ],\n  \"portions\": [\n    {\n      \"itemId\": \"{{itemTequilaId}}\",\n      \"unitId\": \"{{unitShotId}}\",\n      \"label\": \"Shot\",\n      \"defaultPortions\": 1,\n      \"components\": [ { \"itemId\": \"{{itemTequilaId}}\", \"unitId\": \"{{unitShotId}}\", \"quantity\": 1 } ]\n    }\n  ]\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": false,\n  \"data\": [\n    {\n      \"menuID\": \"MENU-TEQ-SHOT\",\n      \"branch\": \"{{branchBarCode}}\",\n      \"autoPrice\": 1500,\n      \"manualAdjustment\": 300,\n      \"finalPrice\": 1800\n    },\n    {\n      \"menuID\": \"MENU-TEQ-SHOT\",\n      \"branch\": \"{{branchVipCode}}\",\n      \"autoPrice\": 1500,\n      \"manualAdjustment\": 300,\n      \"finalPrice\": 1800\n    }\n  ],\n  \"message\": \"menus created\",\n  \"status\": 201\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Menus (Bulk via CSV Payload)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/menus/bulk",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "menus",
+                "bulk"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": \"{{userId}}\",\n  \"bulk\": [\n    {\n      \"branch_id\": \"{{branchBarCode}}\",\n      \"department_code\": \"BAR\",\n      \"type\": \"beverage\",\n      \"description\": \"Signature cocktail\",\n      \"name\": \"House Mojito\",\n      \"price\": 200,\n      \"portions\": \"[{\\\"itemId\\\":\\\"{{itemRumId}}\\\",\\\"unitId\\\":\\\"{{unitMlId}}\\\",\\\"quantity\\\":50}]\"\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/products",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "products"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Hennessy Bottle\",\n  \"price\": 90000,\n  \"description\": \"750ml bottle\",\n  \"branchID\": \"{{branchBarCode}}\",\n  \"categoryCode\": \"BEV\",\n  \"quantity\": 50,\n  \"unit\": \"bottle\",\n  \"portions\": [\n    {\n      \"itemId\": \"{{itemHennessyId}}\",\n      \"unitId\": \"{{unitBottleId}}\",\n      \"defaultPortions\": 1,\n      \"components\": [ { \"itemId\": \"{{itemHennessyId}}\", \"unitId\": \"{{unitBottleId}}\", \"quantity\": 1 } ]\n    }\n  ],\n  \"stock\": [\n    { \"branchID\": \"{{branchBarCode}}\", \"categoryCode\": \"BEV\", \"code\": \"BOTTLE-750\", \"quantity\": 50 }\n  ]\n}"
+            },
+            "description": "Creates a sellable product that deducts inventory via its portion definition. At least one portion (or a `portionPresetId`) is required; missing `menuPricing` entries on any `{ itemId, unitId }` pair causes the API to respond with 422."
+          },
+          "response": [
+            {
+              "name": "422 \u2013 item menu pricing missing",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{URL}}/v1/products",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "v1",
+                    "products"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Hennessy Bottle\",\n  \"price\": 90000,\n  \"description\": \"750ml bottle\",\n  \"branchID\": \"{{branchBarCode}}\",\n  \"categoryCode\": \"BEV\",\n  \"quantity\": 50,\n  \"unit\": \"bottle\",\n  \"portions\": [\n    {\n      \"itemId\": \"{{itemHennessyId}}\",\n      \"unitId\": \"{{unitBottleId}}\",\n      \"defaultPortions\": 1,\n      \"components\": [ { \"itemId\": \"{{itemHennessyId}}\", \"unitId\": \"{{unitBottleId}}\", \"quantity\": 1 } ]\n    }\n  ],\n  \"stock\": [\n    { \"branchID\": \"{{branchBarCode}}\", \"categoryCode\": \"BEV\", \"code\": \"BOTTLE-750\", \"quantity\": 50 }\n  ]\n}"
+                },
+                "description": "Creates a sellable product that deducts inventory via its portion definition. At least one portion (or a `portionPresetId`) is required; missing `menuPricing` entries on any `{ itemId, unitId }` pair causes the API to respond with 422."
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "body": "{\n  \"error\": true,\n  \"errors\": [\n    \"item menu pricing not configured for: ITEM-RICE (UNIT-PORTION)\"\n  ],\n  \"message\": \"item menu pricing not configured for: ITEM-RICE (UNIT-PORTION)\",\n  \"status\": 422\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Products (Bulk CSV)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/csv"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/products/bulk",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "products",
+                "bulk"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "name,price,description,branch_id,category_code,quantity,unit,portions\n\"Kitchen Rice Bag\",0,\"Internal reference\",\"{{branchKitchenId}}\",\"KITCHEN\",0,\"bag\",\"[{\\\"portionPresetId\\\":\\\"PRESET-RICE-BAG\\\"}]\""
+            },
+            "description": "Uploads a CSV file (text/csv) to /v1/products/bulk. Each row must include a `portions` column containing a JSON array or preset reference; rows missing or failing to parse the column are rejected so recipes stay tied to inventory."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Menu Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/orders/buy-menu/{{memberId}}",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "orders",
+                "buy-menu",
+                "{{memberId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"medium\": \"digital\",\n  \"tip\": 0,\n  \"items\": [\n    { \"menuID\": \"{{menuTequilaCode}}\", \"quantity\": 20 },\n    { \"menuID\": \"{{menuRicePlateCode}}\", \"quantity\": 4 }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Product Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/orders/buy-product/{{memberId}}",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "orders",
+                "buy-product",
+                "{{memberId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"medium\": \"digital\",\n  \"tip\": 0,\n  \"items\": [\n    { \"productID\": \"{{productHennessyCode}}\", \"quantity\": 10 }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Initiate Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/orders/pay/{{orderId}}",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "orders",
+                "pay",
+                "{{orderId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"medium\": \"digital\" }"
+            }
+          }
+        },
+        {
+          "name": "Get Order with Inventory Snapshot",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "orders",
+                "{{orderId}}"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": false,\n  \"data\": {\n    \"orderID\": \"ORDER-001\",\n    \"status\": \"paid\",\n    \"inventory\": {\n      \"deductionId\": \"INV-DED-001\",\n      \"totalCost\": 68400,\n      \"items\": [\n        {\n          \"code\": \"MENU-TEQ-SHOT\",\n          \"quantity\": 20,\n          \"menuAutoPrice\": 1500,\n          \"menuManualAdjustment\": 300,\n          \"menuFinalPrice\": 1800,\n          \"menuFinalTotal\": 36000,\n          \"components\": [\n            {\n              \"item\": \"ITEM-TEQUILA\",\n              \"menuUnitPrice\": 1500,\n              \"menuTotalPrice\": 30000,\n              \"unitCost\": 800,\n              \"totalCost\": 16000\n            }\n          ]\n        },\n        {\n          \"code\": \"MENU-RICE-PLATE\",\n          \"quantity\": 4,\n          \"menuAutoPrice\": 3900,\n          \"menuManualAdjustment\": 300,\n          \"menuFinalPrice\": 4200,\n          \"menuFinalTotal\": 16800,\n          \"components\": [\n            {\n              \"item\": \"ITEM-RICE\",\n              \"menuUnitPrice\": 450,\n              \"menuTotalPrice\": 3600,\n              \"unitCost\": 480,\n              \"totalCost\": 3072\n            },\n            {\n              \"item\": \"ITEM-CHICKEN\",\n              \"menuUnitPrice\": 1500,\n              \"menuTotalPrice\": 12000,\n              \"unitCost\": 900,\n              \"totalCost\": 8640\n            }\n          ]\n        }\n      ]\n    }\n  },\n  \"message\": \"successful\",\n  \"status\": 200\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Allocations",
+      "item": [
+        {
+          "name": "Create Allocation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/allocations/{{branchKitchenId}}",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "allocations",
+                "{{branchKitchenId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"staffID\": \"{{staffKitchenId}}\",\n  \"description\": \"Daily rice prep\",\n  \"items\": [\n    { \"code\": \"{{productRiceBagCode}}\", \"quantity\": 2 }\n  ]\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": false,\n  \"data\": {\n    \"allocationID\": \"ALLOC-001\",\n    \"branch\": \"{{branchKitchenId}}\",\n    \"items\": [\n      {\n        \"code\": \"{{productRiceBagCode}}\",\n        \"quantity\": 2,\n        \"used\": 0,\n        \"released\": 0\n      }\n    ],\n    \"status\": \"open\"\n  },\n  \"message\": \"allocation created\",\n  \"status\": 201\n}"
+            }
+          ]
+        },
+        {
+          "name": "Use Allocation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/allocations/use/{{allocationId}}",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "allocations",
+                "use",
+                "{{allocationId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"quantity\": 1, \"notes\": \"Kitchen prep\" }"
+            }
+          }
+        },
+        {
+          "name": "Release Allocation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/allocations/release/{{allocationId}}",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "allocations",
+                "release",
+                "{{allocationId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"quantity\": 1, \"notes\": \"Not needed\" }"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reporting",
+      "item": [
+        {
+          "name": "COGS Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/reports/cogs",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "reports",
+                "cogs"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branchID\": \"{{branchKitchenId}}\",\n  \"dateFrom\": \"2024-11-01\",\n  \"dateTo\": \"2024-11-07\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": false,\n  \"data\": {\n    \"branch\": \"{{branchKitchenId}}\",\n    \"range\": { \"from\": \"2024-11-01\", \"to\": \"2024-11-07\" },\n    \"totalCost\": 68400,\n    \"items\": [\n      {\n        \"item\": \"ITEM-RICE\",\n        \"quantity\": 40,\n        \"unitCost\": 480,\n        \"totalCost\": 19200\n      },\n      {\n        \"item\": \"ITEM-CHICKEN\",\n        \"quantity\": 8,\n        \"unitCost\": 900,\n        \"totalCost\": 7200\n      }\n    ]\n  },\n  \"message\": \"successful\",\n  \"status\": 200\n}"
+            }
+          ]
+        },
+        {
+          "name": "Allocation Variance Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/reports/allocations/variance",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "reports",
+                "allocations",
+                "variance"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"branchID\": \"{{branchKitchenId}}\", \"dateFrom\": \"2024-11-01\", \"dateTo\": \"2024-11-07\" }"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": false,\n  \"data\": {\n    \"branch\": \"{{branchKitchenId}}\",\n    \"period\": { \"from\": \"2024-11-01\", \"to\": \"2024-11-07\" },\n    \"items\": [\n      {\n        \"allocationCode\": \"ALLOC-001\",\n        \"requested\": 2,\n        \"confirmed\": 1.5,\n        \"released\": 0.5,\n        \"variance\": -0.5\n      }\n    ]\n  },\n  \"message\": \"successful\",\n  \"status\": 200\n}"
+            }
+          ]
+        },
+        {
+          "name": "Inventory Valuation Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/v1/reports/valuation",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "v1",
+                "reports",
+                "valuation"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"branchID\": \"{{branchKitchenId}}\" }"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "familyId",
+      "value": "FAM-GRAINS",
+      "type": "string"
+    },
+    {
+      "key": "unitKgId",
+      "value": "UNIT-KG",
+      "type": "string"
+    },
+    {
+      "key": "unitBagId",
+      "value": "UNIT-BAG",
+      "type": "string"
+    },
+    {
+      "key": "unitPortionId",
+      "value": "UNIT-PORTION",
+      "type": "string"
+    },
+    {
+      "key": "unitBottleId",
+      "value": "UNIT-BOTTLE",
+      "type": "string"
+    },
+    {
+      "key": "unitShotId",
+      "value": "UNIT-SHOT",
+      "type": "string"
+    },
+    {
+      "key": "unitPieceId",
+      "value": "UNIT-PIECE",
+      "type": "string"
+    },
+    {
+      "key": "branchKitchenId",
+      "value": "BRANCH-KITCHEN",
+      "type": "string"
+    },
+    {
+      "key": "branchKitchenCode",
+      "value": "BRANCH-KITCHEN",
+      "type": "string"
+    },
+    {
+      "key": "branchBarCode",
+      "value": "BRANCH-BAR",
+      "type": "string"
+    },
+    {
+      "key": "branchVipCode",
+      "value": "BRANCH-VIP",
+      "type": "string"
+    },
+    {
+      "key": "departmentKitchenId",
+      "value": "DEPT-KITCHEN",
+      "type": "string"
+    },
+    {
+      "key": "itemRiceId",
+      "value": "ITEM-RICE",
+      "type": "string"
+    },
+    {
+      "key": "itemChickenId",
+      "value": "ITEM-CHICKEN",
+      "type": "string"
+    },
+    {
+      "key": "itemTequilaId",
+      "value": "ITEM-TEQUILA",
+      "type": "string"
+    },
+    {
+      "key": "itemHennessyId",
+      "value": "ITEM-HENNESSY",
+      "type": "string"
+    },
+    {
+      "key": "itemRumId",
+      "value": "ITEM-RUM",
+      "type": "string"
+    },
+    {
+      "key": "unitMlId",
+      "value": "UNIT-ML",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "USER-ADMIN-1",
+      "type": "string"
+    },
+    {
+      "key": "memberId",
+      "value": "MEMBER-001",
+      "type": "string"
+    },
+    {
+      "key": "menuTequilaCode",
+      "value": "MENU-TEQ-SHOT",
+      "type": "string"
+    },
+    {
+      "key": "menuRicePlateCode",
+      "value": "MENU-RICE-PLATE",
+      "type": "string"
+    },
+    {
+      "key": "productHennessyCode",
+      "value": "PROD-HENNESSY",
+      "type": "string"
+    },
+    {
+      "key": "productRiceBagCode",
+      "value": "PROD-RICE-BAG",
+      "type": "string"
+    },
+    {
+      "key": "staffKitchenId",
+      "value": "STAFF-KITCHEN-1",
+      "type": "string"
+    },
+    {
+      "key": "allocationId",
+      "value": "ALLOC-001",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "ORDER-001",
+      "type": "string"
+    },
+    {
+      "key": "lotId",
+      "value": "LOT-001",
+      "type": "string"
+    }
+  ]
+}
