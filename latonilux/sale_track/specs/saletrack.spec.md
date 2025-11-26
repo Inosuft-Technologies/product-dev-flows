@@ -1,5 +1,4 @@
-# SaleTrack Specification (saletrack.md)
-
+# SaleTrack Specification
 **Version:** 1.2
 **Date:** 2025-11-03
 **Owner:** LATONILUX (Hospitality Platform)

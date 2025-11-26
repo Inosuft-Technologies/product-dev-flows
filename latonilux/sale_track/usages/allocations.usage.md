@@ -6,7 +6,7 @@ Documentation for the allocation reserve/confirm/release workflow introduced in 
 
 - Base route: `/v1/allocations`.
 - Authentication required. All operations are restricted to `superadmin` and `admin` roles unless otherwise noted.
-- Each allocation reserves inventory via `ProductService.reserveStock`; usage confirmation triggers `confirmStock`, and rollbacks call `releaseStock`.
+- Each allocation reserves inventory through the stock lot service (`StockLotService.reserve`). Usage confirmation triggers `StockLotService.confirm`, and rollbacks call `StockLotService.release`.
 - Responses follow the standard envelope `{ error, errors, data, message, status }`.
 
 ---
@@ -27,7 +27,7 @@ Use these endpoints to monitor existing allocations. They provide snapshot visib
 
 ## Create Allocation
 
-Creating an allocation locks stock for a non-sales workflow (housekeeping, spa, maintenance). Think of it as a mini purchase order that draws down over time. Every line reserves lots via `ProductService.reserveStock` and records policy metadata for soft/hard caps.
+Creating an allocation locks stock for a non-sales workflow (housekeeping, spa, maintenance). Think of it as a mini purchase order that draws down over time. Every line reserves lots via the inventory stack (items + units + lots) and records policy metadata for soft/hard caps.
 - `POST /v1/allocations/:branchId`
   - Body example:
     ```json
@@ -40,14 +40,14 @@ Creating an allocation locks stock for a non-sales workflow (housekeeping, spa, 
         "notes": "Alert at 120 units"
       },
       "items": [
-        { "code": "PROD-LAUNDRY", "quantity": 40 },
-        { "code": "PROD-GLOVES", "quantity": 80 }
+        { "itemId": "ITEM-LAUNDRY", "unitId": "UNIT-BAG", "quantity": 40 },
+        { "itemId": "ITEM-GLOVES", "unitId": "UNIT-PACK", "quantity": 80 }
       ]
     }
     ```
   - Behaviour:
-    - Validates product codes (must be internal/non-sale items).
-    - Reserves stock for each product immediately; insufficient stock returns a 400 error.
+    - Validates inventory items/units and enforces positive quantities.
+    - Reserves stock lots for each line immediately; insufficient stock returns a 400/422 error.
     - Attaches warnings when soft caps are exceeded.
 
 ---
@@ -56,7 +56,7 @@ Creating an allocation locks stock for a non-sales workflow (housekeeping, spa, 
 
 After an allocation is created, operations teams log actual consumption through the `use` endpoint. This confirms the previously reserved quantities and writes ledger entries with type `allocation-confirm`. If stock needs to be returned, the `release` endpoint reverses the reservation. Updating the allocation keeps descriptions/policies current.
 - `PUT /v1/allocations/use/:id`
-  - Body: `{ "code": "PROD-LAUNDRY", "quantity": 10, "idempotencyKey": "issue-20241103-1" }`
+  - Body: `{ "itemId": "ITEM-LAUNDRY", "unitId": "UNIT-BAG", "quantity": 10, "idempotencyKey": "issue-20241103-1" }`
   - Confirms reserved stock and writes ledger entries; supports idempotency to avoid double consumption.
 - `PUT /v1/allocations/release/:id`
   - Body mirrors `use` but returns unused stock to availability.

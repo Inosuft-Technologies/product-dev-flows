@@ -120,7 +120,7 @@ Once the catalog is ready, orders can flow through the payment pipeline.
 Departments that consume stock outside of sales rely entirely on allocations.
 
 1. **Create Allocation** (`POST /v1/allocations/:branchId`)
-   - Reserves stock for non-sales activities and enforces soft/hard caps.
+   - Body now lists inventory items (`itemId`, `unitId`, `quantity`, optional `lotId`). Each line reserves stock lots immediately and enforces soft/hard caps.
 
 2. **Confirm Usage** (`PUT /v1/allocations/use/:id`)
    - Deducts a portion of the reservation. The system writes ledger entries with type `allocation-confirm`.

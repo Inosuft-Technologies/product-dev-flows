@@ -81,23 +81,24 @@ This plan outlines the detailed backend and admin frontend workstreams required 
    - Task: Surface lot-level stock status, including remaining quantity, unit cost, expiry, and movement history. Provide filters by outlet, item family, and policy violations (negative stock).  
    - Why: Equips operations with real-time visibility into inventory health and supports investigation of discrepancies.
 
-6. [ ] **Enhanced Allocation Reserve/Confirm/Release Workflows**
+6. [x] **Enhanced Allocation Reserve/Confirm/Release Workflows**
    - Task: Redesign allocation forms to use items/units, display policy settings, show plan vs actual charts, and expose the reserve → confirm → release timeline (no separate requisition/issue layer).  
    - Why: Keeps non-sales departments in lockstep with the backend reserve/confirm/release model and ensures policy warnings surface in the UI.
 
-7. [ ] **Order & Menu Insights**
-   - Task: Update order detail views to display recipe snapshots, deduction cost breakdowns, and idempotency markers. Enhance menu pages with linked recipes, portion-unit definitions, and availability indicators derived from live stock.  
-   - Why: Provides front-of-house supervisors with transparency into how orders impact inventory, validates portion selections, and highlights configuration issues early.
+7. [x] **Order & Menu Insights**
+   - Task: Update order detail views to display recipe snapshots, deduction cost breakdowns, and idempotency markers.
+   - Note: Order Insights completed. Menu Insights deferred (see `docs/plans/deffered-plan.md`).
+   - Why: Provides front-of-house supervisors with transparency into how orders impact inventory.
 
-8. [ ] **Reporting Dashboards**
+8. [x] **Reporting Dashboards**
    - Task: Build visualizations for sales vs COGS, allocation variance, valuation, and lot aging using backend reporting APIs. Implement drill-down to orders, lots, and departments.  
    - Why: Turns the new data into actionable insights for management and finance, completing the inventory-to-revenue loop.
 
-9. [ ] **Testing, QA, and Adoption Prep**
+9. [x] **Testing, QA, and Adoption Prep**
    - Task: Expand frontend unit/integration tests, add smoke scripts for critical flows, update documentation/help guides, and prepare training materials for outlet managers.  
    - Why: Ensures the revamped UI is stable, well-understood, and ready for organization-wide adoption alongside the backend release.
 
-10. [ ] **Auto-Priced Menus UI & Pricing Management**
+10. [ ] ~~**Auto-Priced Menus UI & Pricing Management**~~ *(Deferred – see `docs/plans/deffered-plan.md`, Section 6)*
     - Task: Extend admin screens/forms so ops can manage `menuPricing` entries per item/unit, view auto-calculated menu prices, and optionally add manual adjustments or surcharges. Surface warnings for missing component prices.  
     - Task: Update menu builder to show component price breakdown, compute preview totals (auto price + adjustment), and persist final price metadata to match backend expectations.  
     - Task: Adjust POS/order-facing components to display final menu price sourced from the new fields while preserving existing UX.  
